@@ -1,17 +1,46 @@
 [package]
 name = "tgup"
-version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+version= "0.1.0"
+authors = ["RSUU <rsuuyu@gmail.com>"]
+description = ""
+homepage = "https://crates.io/crates/tgup"
+repository = "https://github.com/rsuu/tgup"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+categories = []
+keywords = []
 
 [lib]
 name = "tgui"
+#crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+lto = "thin"
+opt-level = 2
+codegen-units = 1
+panic = "abort"
+overflow-checks = false
+debug = false
+debug-assertions = false
+incremental = false
+strip = true
+
+#[profile.release.package."*"]
+#opt-level = 2
+#codegen-units = 1
+#debug = false
+#debug-assertions = false
+#incremental = false
+#strip = true
 
 [dependencies]
 prost = "0.12.3"
 rand = "0.8.5"
 nix = { version = "0.27.1", features = ["socket", "uio"] }
+image = { version = "0.24.7", default-features = false, features = ["jpeg", "png"] }
 
 [build-dependencies]
 prost-build = "0.12.3"
+
+[features]
