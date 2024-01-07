@@ -4,14 +4,15 @@ Rust Bindings for Termux GUI
 
 ## TODO
 
-- [ ] Label
+- [x] Label
 - [ ] EditView
-- [ ] ImageView
+- [x] ImageView
 - [ ] Button
 - [ ] Linear Layout
 - [ ] Toggle Button
 - [ ] Radio Button
-- [ ] Buffer
+- [x] Buffer
+- [ ] HardwareBuffer
 - [ ] Spinner
 - [ ] Switch
 - [ ] TabLayout
