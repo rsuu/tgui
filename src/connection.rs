@@ -1,6 +1,8 @@
-use nix::sys::socket::{
-    accept, bind, listen, recv, recvmsg, send, socket, AddressFamily, MsgFlags, RecvMsg, SockFlag,
-    SockType, SockaddrStorage, UnixAddr,
+use nix::{
+    sys::socket::{
+        accept, bind, listen, recv, send, socket, AddressFamily, MsgFlags,
+        SockFlag, SockType, UnixAddr,
+    },
 };
 use prost::Message;
 use rand::{
@@ -8,13 +10,12 @@ use rand::{
     thread_rng,
 };
 use std::{
-    io::Cursor,
     os::{fd::AsRawFd, unix::io::RawFd},
     process::{Command, Stdio},
     thread::sleep_ms,
 };
 
-use crate::{items::NewActivityResponse, *};
+use crate::{res::MyErr, *};
 
 #[derive(Debug)]
 pub struct Tgui {
@@ -38,37 +39,35 @@ pub enum ProtocolType {
 }
 
 impl Tgui {
-    pub fn new() -> Self {
+    pub fn new() -> Res<Self> {
         // gen random string
         let main_addr = Alphanumeric.sample_string(&mut thread_rng(), 50);
         let event_addr = Alphanumeric.sample_string(&mut thread_rng(), 50);
 
-        let main_sock_addr = UnixAddr::new_abstract(main_addr.as_bytes()).unwrap();
-        let event_sock_addr = UnixAddr::new_abstract(event_addr.as_bytes()).unwrap();
+        let main_sock_addr = UnixAddr::new_abstract(main_addr.as_bytes())?;
+        let event_sock_addr = UnixAddr::new_abstract(event_addr.as_bytes())?;
 
         let main_sock = socket(
             AddressFamily::Unix,
             SockType::Stream,
             SockFlag::empty(),
             None,
-        )
-        .unwrap();
+        )?;
         let event_sock = socket(
             AddressFamily::Unix,
             SockType::Stream,
             SockFlag::empty(),
             None,
-        )
-        .unwrap();
+        )?;
 
         sleep_ms(10);
-        bind(main_sock.as_raw_fd(), &main_sock_addr).unwrap();
+        bind(main_sock.as_raw_fd(), &main_sock_addr)?;
 
         sleep_ms(10);
-        bind(event_sock.as_raw_fd(), &event_sock_addr).unwrap();
+        bind(event_sock.as_raw_fd(), &event_sock_addr)?;
 
-        listen(&main_sock, 1).unwrap();
-        listen(&event_sock, 1).unwrap();
+        listen(&main_sock, 1)?;
+        listen(&event_sock, 1)?;
 
         Command::new("am")
             .stdout(Stdio::null())
@@ -84,18 +83,17 @@ impl Tgui {
                 "eventSocket",
                 &event_addr,
             ])
-            .output()
-            .unwrap();
+            .output()?;
 
-        let main = accept(main_sock.as_raw_fd()).unwrap();
-        let event = accept(event_sock.as_raw_fd()).unwrap();
+        let main = accept(main_sock.as_raw_fd())?;
+        let event = accept(event_sock.as_raw_fd())?;
 
-        Self {
+        Ok(Self {
             main,
             event,
             pty: ProtocolType::Proto,
             activity: Default::default(),
-        }
+        })
     }
 
     pub fn with_json(mut self) -> Self {
@@ -104,30 +102,37 @@ impl Tgui {
         self
     }
 
-    pub fn conn(self) -> Self {
+    pub fn conn(self) -> Res<Self> {
         let mut protocol = [self.pty as u8];
-        while send(self.fd_main(), &protocol, MsgFlags::empty()).unwrap() == 0 {}
+        while send(self.fd_main(), &protocol, MsgFlags::empty())? == 0 {}
 
         protocol = [0u8];
-        while recv(self.fd_main(), &mut protocol, MsgFlags::empty()).unwrap() == 0 {}
+        while recv(self.fd_main(), &mut protocol, MsgFlags::empty())? == 0 {}
 
-        self
+        Ok(self)
     }
 
-    pub fn send_msg(&self, msg: &[u8]) {
-        send_all(self.fd_main(), msg);
+    pub fn send_msg(&self, msg: &[u8]) -> Res<()> {
+        send_all(self.fd_main(), msg)?;
+
+        Ok(())
     }
 
-    pub fn recv_msg<T: Message + Default>(&self) -> Result<T, ()> {
-        let size = recv_size(self.fd_main()).unwrap();
+    pub fn recv_msg<T: Message + Default>(&self) -> Res<T> {
+        let size = recv_size(self.fd_main())?;
         let mut msg = vec![0_u8; size];
         let mut start = 0;
         while start < msg.len() {
-            let ret = recv(self.fd_main(), &mut msg[start..], MsgFlags::empty()).unwrap();
+            let ret = recv(self.fd_main(), &mut msg[start..], MsgFlags::empty())?;
             start += ret;
         }
 
-        Ok(Message::decode(msg.as_slice()).unwrap())
+        Ok(Message::decode(msg.as_slice())?)
+    }
+
+    pub fn recv_msg_fd(&self) -> Res<()> {
+        // TODO:
+        Ok(())
     }
 
     pub fn fd_main(&self) -> RawFd {
@@ -143,16 +148,18 @@ impl Tgui {
     }
 }
 
-fn send_all(fd: RawFd, msg: &[u8]) {
+fn send_all(fd: RawFd, msg: &[u8]) -> Res<()> {
     let mut start = 0;
     while start < msg.len() {
-        let ret = send(fd, &msg[start..], MsgFlags::empty()).unwrap();
+        let ret = send(fd, &msg[start..], MsgFlags::empty())?;
         start += ret;
     }
+
+    Ok(())
 }
 
 // REFS: https://docs.rs/delimited-protobuf/latest/src/delimited_protobuf/lib.rs.html#5-14
-fn recv_size(fd: RawFd) -> Option<usize> {
+fn recv_size(fd: RawFd) -> Res<usize> {
     let mut buf = [0_u8; 1];
     let mut num_bits_read = 0;
     let mut val: u32 = 0;
@@ -178,8 +185,8 @@ fn recv_size(fd: RawFd) -> Option<usize> {
     }
 
     if val == 0 {
-        None
+        Err(MyErr::ProtoZeroLen)
     } else {
-        Some(val as usize)
+        Ok(val as usize)
     }
 }

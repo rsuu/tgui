@@ -1,15 +1,17 @@
 use crate::{
-    items::{self, CreateEvent},
+    items::{CreateEvent},
     *,
 };
 
 #[derive(Debug)]
 struct Event {}
 
-fn new() {
-    let event = CreateEvent {
-        ..Default::default()
-    };
+impl Event {
+    fn new() {
+        let _event = CreateEvent {
+            ..Default::default()
+        };
+    }
 }
 
 impl Tgui {

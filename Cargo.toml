@@ -39,6 +39,7 @@ prost = "0.12.3"
 rand = "0.8.5"
 nix = { version = "0.27.1", features = ["socket", "uio"] }
 image = { version = "0.24.7", default-features = false, features = ["jpeg", "png"] }
+thiserror = "1.0.56"
 
 [build-dependencies]
 prost-build = "0.12.3"

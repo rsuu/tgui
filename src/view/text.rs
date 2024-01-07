@@ -2,8 +2,8 @@ use prost::Message;
 
 use crate::{
     items::{
-        method, new_activity_request::ActivityType, CreateTextViewRequest, CreateTextViewResponse,
-        Method, NewActivityRequest, NewActivityResponse, SetTextRequest, SetTextResponse,
+        method, AddRemoteTextViewRequest, AddRemoteTextViewResponse, CreateTextViewRequest, CreateTextViewResponse, Method,
+        SetRemoteTextRequest, SetRemoteTextResponse, SetTextRequest, SetTextResponse,
     },
     *,
 };
@@ -16,22 +16,45 @@ pub struct Text {
     clickable_links: bool,
 }
 
+#[derive(Debug, Default)]
+pub struct RemoteText {
+    // req
+    rid: i32,
+    parent: i32,
+    text: String,
+}
+
+impl RemoteText {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn set_text(mut self, text: String) -> Self {
+        self.text = text;
+
+        self
+    }
+
+    pub fn set_parent(mut self, parent: i32) -> Self {
+        self.parent = parent;
+
+        self
+    }
+}
+
 impl Text {
     pub fn new() -> Self {
         Default::default()
     }
 
-    pub fn default_data(mut self) -> Self {
-        self.data = Some(items::Create {
-            parent: -1,
-            ..Default::default()
-        });
+    pub fn set_text(mut self, text: String) -> Self {
+        self.text = text;
 
         self
     }
 
-    pub fn set_text(mut self, text: String) -> Self {
-        self.text = text;
+    pub fn set_data(mut self, data: items::Create) -> Self {
+        self.data = Some(data);
 
         self
     }
@@ -47,34 +70,10 @@ impl Text {
 
         self
     }
-
-    pub fn set_parent(mut self, parent: i32) -> Self {
-        if let Some(data) = self.data.as_mut() {
-            data.parent = parent;
-        }
-
-        self
-    }
-
-    pub fn set_aid(mut self, aid: i32) -> Self {
-        if let Some(data) = self.data.as_mut() {
-            data.aid = aid;
-        }
-
-        self
-    }
-
-    pub fn set_v(mut self, v: i32) -> Self {
-        if let Some(data) = self.data.as_mut() {
-            data.v = v;
-        }
-
-        self
-    }
 }
 
 impl Tgui {
-    pub fn new_text_view(&self, req: Text) -> Result<CreateTextViewResponse, ()> {
+    pub fn new_text_view(&self, req: Text) -> Res<CreateTextViewResponse> {
         let req = CreateTextViewRequest {
             data: req.data,
             text: req.text,
@@ -86,19 +85,53 @@ impl Tgui {
         };
         let msg = method.encode_length_delimited_to_vec();
 
-        self.send_msg(msg.as_slice());
+        self.send_msg(msg.as_slice())?;
 
         self.recv_msg()
     }
 
-    pub fn text_update(&self, v: Option<items::View>, text: String) -> Result<SetTextResponse, ()> {
+    pub fn text_update(&self, v: Option<items::View>, text: String) -> Res<SetTextResponse> {
         let a = SetTextRequest { v, text };
         let method = Method {
             method: Some(method::Method::SetText(a)),
         };
         let msg = method.encode_length_delimited_to_vec();
 
-        self.send_msg(msg.as_slice());
+        self.send_msg(msg.as_slice())?;
+
+        self.recv_msg()
+    }
+}
+
+impl Tgui {
+    pub fn new_remote_text_view(&self, req: &RemoteText) -> Res<AddRemoteTextViewResponse> {
+        let req = AddRemoteTextViewRequest {
+            rid: req.rid,
+            parent: req.parent,
+        };
+        let method = Method {
+            method: Some(method::Method::AddRemoteTextView(req)),
+        };
+        let msg = method.encode_length_delimited_to_vec();
+
+        self.send_msg(msg.as_slice())?;
+
+        self.recv_msg()
+    }
+
+    pub fn remote_text_update(
+        &self,
+        text: String,
+        rid: i32,
+        id: i32,
+    ) -> Res<SetRemoteTextResponse> {
+        let req = SetRemoteTextRequest { text, rid, id };
+        let method = Method {
+            method: Some(method::Method::SetRemoteText(req)),
+        };
+        let msg = method.encode_length_delimited_to_vec();
+
+        self.send_msg(msg.as_slice())?;
 
         self.recv_msg()
     }

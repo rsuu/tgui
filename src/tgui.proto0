@@ -31,7 +31,7 @@ For additional security, the program should check if the connected peer has the 
 
 
 
-Each message is send delimited, that is the size of the message is send as a varint first.  
+Each message is send delimited, that is the size of the message is send as a varint first.
 All protocol buffer implementations should allow you to read the varint or a delimited message directly.
 
 Events are send via the Event message, with the oneof sent to the actual event.
@@ -687,7 +687,7 @@ message GetConfigurationResponse {
 Turn the screen on.
  */
 message TurnScreenOnRequest {
-  
+
 }
 
 message TurnScreenOnResponse {
@@ -699,7 +699,7 @@ message TurnScreenOnResponse {
 Check whether the device is locked.
  */
 message IsLockedRequest {
-  
+
 }
 
 message IsLockedResponse {
@@ -847,7 +847,7 @@ message ConfigureInsetsRequest {
   How the bars should behave to user input.
    */
   BarBehaviour behaviour = 3;
-  
+
 }
 
 message ConfigureInsetsResponse {
@@ -860,7 +860,7 @@ message ConfigureInsetsResponse {
 Get the plugin version code.
  */
 message GetVersionRequest {
-  
+
 }
 
 message GetVersionResponse {
@@ -1890,7 +1890,7 @@ Most methods work like the View methods.
 Create a new remote layout. You can then place remote Views in the layout.
  */
 message CreateRemoteLayoutRequest {
-  
+
 }
 
 message CreateRemoteLayoutResponse {
@@ -2583,7 +2583,7 @@ message SurfaceViewConfigRequest {
   It is ignored on Android versions lower than 11.
    */
   float framerate = 5;
-  
+
 }
 
 message SurfaceViewConfigResponse {
@@ -2623,7 +2623,7 @@ message Method {
     GetLogRequest getLog = 40;
     InterceptVolumeButtonRequest interceptVolume = 41;
     ConfigureInsetsRequest configInsets = 42;
-    
+
 
     // View creation methods
     CreateLinearLayoutRequest createLinearLayout = 100;
@@ -2647,10 +2647,10 @@ message Method {
     CreateWebViewRequest createWebView = 128;
     CreateGridLayoutRequest createGridLayout = 129;
     CreateSurfaceViewRequest createSurfaceView = 130;
-    
-    
+
+
     // View manipulation methods
-    
+
     ShowCursorRequest showCursor = 200;
     SetLinearLayoutParamsRequest setLinearLayout = 201;
     SetGridLayoutParamsRequest setGridLayout = 202;
@@ -2686,10 +2686,10 @@ message Method {
     SelectItemRequest selectItem = 233;
     SetClickableRequest setClickable = 234;
     SetCheckedRequest setChecked = 235;
-    
-    
+
+
     // RemoteViews methods
-    
+
     CreateRemoteLayoutRequest createRemoteLayout = 300;
     DeleteRemoteLayoutRequest deleteRemoteLayout = 301;
     AddRemoteFrameLayoutRequest addRemoteFrameLayout = 302;
@@ -2707,11 +2707,11 @@ message Method {
     SetRemotePaddingRequest setRemotePadding = 314;
     SetRemoteImageRequest setRemoteImage = 315;
     SetWidgetLayoutRequest setWidgetLayout = 316;
-    
-    
-    
+
+
+
     // WebView methods
-    
+
     AllowJavascriptRequest allowJS = 400;
     AllowContentURIRequest allowContent = 401;
     SetDataRequest setData = 402;
@@ -2720,32 +2720,32 @@ message Method {
     GoBackRequest goBack = 405;
     GoForwardRequest goForward = 406;
     EvaluateJSRequest evaluateJS = 407;
-    
-    
+
+
     // Notification methods
 
     CreateNotificationChannelRequest createChannel = 500;
     CreateNotificationRequest createNotification = 501;
     CancelNotificationRequest cancelNotification = 502;
-    
-    
-    
+
+
+
     // Event control methods
-    
+
     SendClickEventRequest sendClickEvent = 600;
     SendLongClickEventRequest sendLongClickEvent = 601;
     SendFocusChangeEventRequest sendFocusChangeEvent = 602;
     SendTouchEventRequest sendTouchEvent = 603;
     SendTextEventRequest sendTextEvent = 604;
     SendOverlayTouchEventRequest sendOverlayTouch = 605;
-    
-    
+
+
     CreateHardwareBufferRequest createHardwareBuffer = 700;
     DestroyHardwareBufferRequest destroyHardwareBuffer = 701;
     SurfaceViewSetBufferRequest setSurfaceBuffer = 702;
     SurfaceViewConfigRequest surfaceConfig = 703;
-    
-    
+
+
   }
 }
 
@@ -2993,14 +2993,14 @@ message TimezoneEvent {
 Send when the screen is turned off.
  */
 message ScreenOffEvent {
-  
+
 }
 
 /*
 Send when the screen is turned on.
  */
 message ScreenOnEvent {
-  
+
 }
 
 /*
@@ -3165,8 +3165,8 @@ message Event {
     ClickEvent click = 1;
     TouchEvent touch = 2;
     TextEvent text = 3;
-    
-    
+
+
     CreateEvent create = 16;
     StartEvent start = 17;
     ResumeEvent resume = 18;
@@ -3203,22 +3203,14 @@ message Event {
     VolumeKeyEvent volume = 50;
     InsetEvent inset = 51;
     SurfaceViewSurfaceChangedEvent surfaceChanged = 52;
-    
+
     // Debug events
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
   }
 }
-
-
-
-
-
-
-
-

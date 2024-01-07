@@ -1,63 +1,66 @@
-use std::{io::Cursor, thread::sleep_ms};
+use std::thread::sleep_ms;
 
 use tgui::{
-    activity::Activity,
-    connection::Tgui,
     items,
-    view::{self, Img},
+    view::{self, img::ImgTy, Img},
+    Activity, Res, Tgui, View, ViewSet,
 };
 
-fn main() {
+fn main() -> Res<()> {
+    let _args = std::env::args().collect::<Vec<String>>();
+
     // success
-    let tgui = Tgui::new().conn();
+    let tgui = Tgui::new()?.conn()?;
 
     let act = Activity::new();
-    let r_act = tgui.new_activity(act).unwrap();
+    let r_act = tgui.new_activity(act)?;
     dbg!(&r_act);
 
-    let img = view::Img::new()
-        .default_data()
-        .set_aid(r_act.aid)
-        .set_parent(-1);
-    let r_img = tgui.new_img_view(img).unwrap();
-    let img_path = "test.jpg";
-    let base_img = image::open(img_path).unwrap();
-    let mut buf: Vec<u8> = Vec::new();
-    base_img
-        .write_to(
-            &mut Cursor::new(&mut buf),
-            image::ImageOutputFormat::Jpeg(90),
-        )
-        .unwrap();
-    let r_img_up = tgui
-        .img_update(
-            Some(items::View {
-                aid: r_act.aid,
-                id: r_img.id,
-            }),
-            buf,
-        )
-        .unwrap();
-    sleep_ms(3000);
+    let aid = r_act.get_aid()?;
 
-    let text = "hi".to_string();
-    let text = view::Text::new()
-        .default_data()
-        .set_text(text)
-        .set_aid(r_act.aid)
-        .set_v(100);
-    let r_text = tgui.new_text_view(text).unwrap();
-    sleep_ms(1000);
+    // display img
+    {
+        let data = items::Create::new().set_aid(aid).set_v(100).set_parent(-1);
+        let img = Img::new().set_data(data);
+        let res = tgui.new_img_view(img)?;
+        let _ = tgui.img_update(ImgTy::open_jpg("test.jpg")?, Some(aid), Some(res.id))?;
+        sleep_ms(3000);
+    }
 
-    let text = "bye".to_string();
-    let r_text_up = tgui
-        .text_update(
-            Some(items::View {
-                aid: r_act.aid,
-                id: r_text.id,
-            }),
-            text,
-        )
-        .unwrap();
-    sleep_ms(1000);
+    // display text
+    {
+        let data = items::Create::new().set_aid(aid).set_parent(-1).set_v(100);
+        let text = "hi".to_string();
+        let req = view::Text::new().set_data(data).set_text(text);
+        let res = tgui.new_text_view(req)?;
+        sleep_ms(1000);
+
+        // reset text
+        {
+            let text = "bye".to_string();
+            let _r_text_up = tgui.text_update(Some(items::View { aid, id: res.id }), text)?;
+            sleep_ms(1000);
+        }
+    }
+
+    // // create Layout and TextView and Widget
+    // {
+    //     unimplemented!();
+    //     let layout = tgui.new_remote_layout()?;
+    //     let rid = layout.rid;
+    //
+    //     // create RemoteTextView
+    //     let req = view::RemoteText::new()
+    //         .set_text("remote text".to_string())
+    //         .set_parent(-1);
+    //     let rtext_res = tgui.new_remote_text_view(&req)?;
+    //
+    //     let wid = args[1].clone();
+    //     let req = view::Widget::new().set_wid(wid).set_rid(rid);
+    //     let _ = tgui.new_widget_view(&req)?;
+    //
+    //     let _ = tgui.remote_text_update("bye".to_string(), rid, rtext_res.id)?;
+    // }
+
+    Ok(())
 }
