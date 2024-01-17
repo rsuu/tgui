@@ -7,6 +7,9 @@ pub enum MyErr {
     #[error("TODO")]
     Todo,
 
+    #[error("UnsupportImgType")]
+    UnsupportImgType,
+
     #[error("nix")]
     Errno(#[from] nix::errno::Errno),
 

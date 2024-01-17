@@ -19,7 +19,7 @@ fn main() -> Res<()> {
     let aid = r_act.get_aid()?;
 
     let imgty = ImgTy::open_rgba8888("test.jpg")?;
-    let data = items::Create::new().set_aid(aid).set_v(100).set_parent(-1);
+    let data = items::Create::new().set_aid(aid).set_v(2).set_parent(-1);
     let img = Img::new().set_data(data);
     let img_res = tgui.new_img_view(img)?;
 
@@ -35,28 +35,9 @@ fn main() -> Res<()> {
         dbg!(tgui.hwbuffer_view_config(aid, surface_res.id)?);
     }
 
-    //    let buffer = view::Buffer::new(&imgty)?;
-    //    let mut buffer_res = tgui.new_buffer(&buffer)?;
-    //    tgui.buffer_set(aid, &img_res, &buffer_res)?;
-    //
-    //    unsafe {
-    //        buffer_res.mmap()?;
-    //    }
-    //
-    //    {
-    //        let buf = imgty.get_data()?;
-    //        buffer_res.mmap_flush(buf)?;
-    //
-    //        tgui.buffer_blit(buffer_res.bid as i32)?;
-    //        tgui.img_refresh(Some(items::View {
-    //            aid,
-    //            id: img_res.id,
-    //        }))?;
-    //    }
-
-    sleep_ms(1000);
-
     unimplemented!();
+
+    sleep_ms(10000);
 
     Ok(())
     // TODO:

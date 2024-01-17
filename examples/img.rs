@@ -1,10 +1,3 @@
-# [WIP] tgup
-
-Rust Bindings For Termux GUI
-
-## Usage
-
-```rust
 use std::thread::sleep_ms;
 use tgui::{View, ViewSet, *};
 
@@ -25,25 +18,3 @@ fn main() -> Res<()> {
 
     Ok(())
 }
-```
-
-## TODO
-
-- [x] ImageView
-- [x] TextView
-- [ ] EditView
-- [ ] NestedScrollView
-- [ ] HorizontalScrollView
-- [ ] Button
-- [ ] Spinner
-- [ ] Switch
-- [ ] Toggle Button
-- [ ] Event
-- [ ] Radio Button
-- [ ] Remote
-- [ ] Linear Layout
-- [ ] Swipe Refresh Layout
-- [ ] TabLayout
-- [ ] ProgressBar
-- [x] Buffer
-- [?] HardwareBuffer

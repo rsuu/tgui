@@ -14,8 +14,7 @@ use crate::{
         method, AddBufferRequest, BlitBufferRequest, BlitBufferResponse, Method, SetBufferRequest,
         SetBufferResponse,
     },
-    view::ImgRes,
-    ImgTy, *,
+    Img, ImgTy, *,
 };
 
 #[derive(Debug)]
@@ -67,7 +66,7 @@ impl BufferRes {
     }
 
     // # Safety
-    // We will panic if ptr is null OR buf.len != self.len
+    // We will check if ptr is null OR buf.len != self.len
     pub fn mmap_flush(&mut self, buf: &[u8]) -> Res<()> {
         if self.ptr.is_null() || buf.len() != self.len {
             return Err(MyErr::Todo);
@@ -91,7 +90,7 @@ impl Tgui {
         let Buffer { width, height } = *req;
         let method = Method {
             method: Some(method::Method::AddBuffer(AddBufferRequest {
-                // BUG: it's rgba and not argb
+                // BUG: it's RGBA and not ARGB
                 f: items::add_buffer_request::Format::Argb8888.into(),
                 width,
                 height,
@@ -114,7 +113,7 @@ impl Tgui {
 
         let mut tmp = [0_u8; 1];
         let mut fds = cmsg_space!([RawFd; 2]);
-        let mut fd = None;
+        let mut fd = Option::<i32>::None;
         'l1: loop {
             let mut io_mut_buff = [std::io::IoSliceMut::new(&mut tmp)];
             let ret: RecvMsg<SockaddrStorage> = recvmsg(
@@ -125,10 +124,14 @@ impl Tgui {
             )
             .unwrap();
 
+            if ret.bytes != 1 {
+                return Err(MyErr::Todo);
+            }
+
             for f in ret.cmsgs().into_iter() {
-                //dbg!(&f);
-                if let ControlMessageOwned::ScmRights(f) = f {
-                    fd = Some(*f.first().unwrap());
+                if let ControlMessageOwned::ScmRights(v) = f {
+                    fd = v.first().copied();
+
                     break 'l1;
                 }
             }
@@ -137,17 +140,17 @@ impl Tgui {
         //dbg!(fds, id, fd);
 
         if id < 0 {
-            Err(MyErr::Todo)
-        } else {
-            Ok(BufferRes {
-                fd: fd.unwrap().into_raw_fd(),
-                bid: id as usize,
-
-                // TODO: enum rgb size
-                len: req.size() * 4,
-                ptr: std::ptr::null_mut(),
-            })
+            return Err(MyErr::Todo);
         }
+
+        Ok(BufferRes {
+            fd: fd.unwrap().into_raw_fd(),
+            bid: id as usize,
+
+            // TODO: enum rgb size
+            len: req.size() * 4,
+            ptr: std::ptr::null_mut(),
+        })
     }
 
     pub fn buffer_blit(&self, buffer: i32) -> Res<BlitBufferResponse> {
@@ -165,14 +168,14 @@ impl Tgui {
     pub fn buffer_set(
         &self,
         aid: i32,
-        img_res: &ImgRes,
+        img: &Img,
         buffer_res: &BufferRes,
     ) -> Res<SetBufferResponse> {
         let method = Method {
             method: Some(method::Method::SetBuffer(SetBufferRequest {
                 v: Some(items::View {
                     aid,
-                    id: img_res.id,
+                    id: img.get_id()?,
                 }),
                 buffer: buffer_res.bid as i32,
             })),

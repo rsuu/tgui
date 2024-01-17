@@ -1,10 +1,5 @@
 use std::thread::sleep_ms;
-
-use tgui::{
-    items,
-    view::{self, img::ImgTy, Img},
-    Activity, Res, Tgui, View, ViewSet,
-};
+use tgui::*;
 
 fn main() -> Res<()> {
     let _args = std::env::args().collect::<Vec<String>>();
@@ -16,10 +11,19 @@ fn main() -> Res<()> {
     let r_act = tgui.new_activity(act)?;
     dbg!(&r_act);
 
-    let aid = r_act.get_aid()?;
+    let aid = r_act.get_id()?;
 
     // display img
     {
+        // high-level:
+        // let req = ImgReq::new()
+        //   .set_xxx()
+        //   .set_yyy();
+        //
+        // tgui.exec(req);
+        //
+        // ?loop
+
         let data = items::Create::new().set_aid(aid).set_v(100).set_parent(-1);
         let img = Img::new().set_data(data);
         let res = tgui.new_img_view(img)?;
@@ -42,25 +46,6 @@ fn main() -> Res<()> {
             sleep_ms(1000);
         }
     }
-
-    // // create Layout and TextView and Widget
-    // {
-    //     unimplemented!();
-    //     let layout = tgui.new_remote_layout()?;
-    //     let rid = layout.rid;
-    //
-    //     // create RemoteTextView
-    //     let req = view::RemoteText::new()
-    //         .set_text("remote text".to_string())
-    //         .set_parent(-1);
-    //     let rtext_res = tgui.new_remote_text_view(&req)?;
-    //
-    //     let wid = args[1].clone();
-    //     let req = view::Widget::new().set_wid(wid).set_rid(rid);
-    //     let _ = tgui.new_widget_view(&req)?;
-    //
-    //     let _ = tgui.remote_text_update("bye".to_string(), rid, rtext_res.id)?;
-    // }
 
     Ok(())
 }

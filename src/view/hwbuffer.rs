@@ -1,18 +1,9 @@
-use crate::{
-    ffi::{LibAndroid},
-    items::{
-        method, CreateHardwareBufferRequest, Method, SetBufferRequest,
-        SetBufferResponse,
-        SurfaceViewSetBufferRequest, SurfaceViewSetBufferResponse,
-    },
-    *,
-};
+// WIP
 
-use nix::{
-    sys::socket::{recv, MsgFlags},
-};
+use crate::{items::*, *};
+
+use nix::sys::socket::{recv, MsgFlags};
 use prost::Message;
-
 
 #[derive(Debug)]
 pub struct HwBuffer {
@@ -70,12 +61,10 @@ impl Tgui {
         // the value can be discarded
         let id = i32::from_be_bytes(buf);
 
-        // recv = libandroid.recv
-
         let mut a_hwb = crate::ffi::android::AHardwareBuffer { _unused: [] };
 
         unsafe {
-            let res = libandroid.recv.unwrap()(self.main, &mut a_hwb as *mut _ as *mut _);
+            let res = libandroid.fn_recv.unwrap()(self.main, &mut a_hwb as *mut _ as *mut _);
 
             if res != 0 {
                 panic!()

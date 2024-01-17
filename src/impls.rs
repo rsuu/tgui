@@ -1,19 +1,39 @@
 use crate::*;
 
+impl View for items::View {
+    fn new() -> Self
+    where
+        Self: Sized,
+    {
+        Self { aid: -1, id: -1 }
+    }
+}
+
+impl ViewSet for items::View {
+    fn set_aid(mut self, aid: i32) -> Self {
+        self.aid = aid;
+
+        self
+    }
+
+    fn set_id(mut self, id: i32) -> Self {
+        self.id = id;
+
+        self
+    }
+}
+
 impl View for items::Create {
     fn new() -> Self {
         Self {
             aid: -1,
-            ..Default::default()
+            parent: -1,
+            v: 100,
         }
     }
 
     fn get_parent(&self) -> Res<i32> {
         Ok(self.parent)
-    }
-
-    fn get_aid(&self) -> Res<i32> {
-        Ok(self.aid)
     }
 
     fn get_v(&self) -> Res<i32> {
@@ -38,31 +58,5 @@ impl ViewSet for items::Create {
         self.v = v;
 
         self
-    }
-}
-
-impl View for activity::Activity {
-    fn get_tid(&self) -> Res<i32> {
-        Ok(self.tid)
-    }
-}
-
-impl View for items::NewActivityResponse {
-    fn get_aid(&self) -> Res<i32> {
-        Ok(self.aid)
-    }
-
-    fn get_tid(&self) -> Res<i32> {
-        Ok(self.tid)
-    }
-}
-
-impl View for items::View {
-    fn get_aid(&self) -> Res<i32> {
-        Ok(self.aid)
-    }
-
-    fn get_id(&self) -> Res<i32> {
-        Ok(self.id)
     }
 }

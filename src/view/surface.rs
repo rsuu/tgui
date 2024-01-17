@@ -1,13 +1,12 @@
 use crate::{
     items::{
-        method, CreateSurfaceViewResponse, Method, SurfaceViewConfigRequest, SurfaceViewConfigResponse,
+        method, CreateSurfaceViewResponse, Method, SurfaceViewConfigRequest,
+        SurfaceViewConfigResponse,
     },
     *,
 };
 
-
 use prost::Message;
-
 
 #[derive(Debug)]
 pub struct Surface {}

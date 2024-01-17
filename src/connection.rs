@@ -1,8 +1,5 @@
-use nix::{
-    sys::socket::{
-        accept, bind, listen, recv, send, socket, AddressFamily, MsgFlags,
-        SockFlag, SockType, UnixAddr,
-    },
+use nix::sys::socket::{
+    accept, bind, listen, recv, send, socket, AddressFamily, MsgFlags, SockFlag, SockType, UnixAddr,
 };
 use prost::Message;
 use rand::{
@@ -112,6 +109,21 @@ impl Tgui {
         Ok(self)
     }
 
+    // send and recv Method msg
+    pub fn sr<T: Message + Default>(&self, msg: items::method::Method) -> Res<T> {
+        let msg = items::Method { method: Some(msg) }.encode_length_delimited_to_vec();
+        self.send_msg(msg.as_slice())?;
+
+        self.recv_msg()
+    }
+
+    // send and recv blob msg
+    pub fn msg<T: Message + Default>(&self, msg: &[u8]) -> Res<T> {
+        self.send_msg(msg)?;
+
+        self.recv_msg()
+    }
+
     pub fn send_msg(&self, msg: &[u8]) -> Res<()> {
         send_all(self.fd_main(), msg)?;
 
@@ -131,8 +143,32 @@ impl Tgui {
     }
 
     pub fn recv_msg_fd(&self) -> Res<()> {
-        // TODO:
+        todo!()
+    }
+
+    pub fn sr_event(&self, msg: items::method::Method) -> Res<items::Event> {
+        let msg = items::Method { method: Some(msg) }.encode_length_delimited_to_vec();
+        self.send_event(msg.as_slice())?;
+
+        self.recv_event()
+    }
+
+    pub fn send_event(&self, msg: &[u8]) -> Res<()> {
+        send_all(self.fd_event(), msg)?;
+
         Ok(())
+    }
+
+    pub fn recv_event(&self) -> Res<items::Event> {
+        let size = recv_size(self.fd_event())?;
+        let mut msg = vec![0_u8; size];
+        let mut start = 0;
+        while start < msg.len() {
+            let ret = recv(self.fd_event(), &mut msg[start..], MsgFlags::empty())?;
+            start += ret;
+        }
+
+        Ok(Message::decode(msg.as_slice())?)
     }
 
     pub fn fd_main(&self) -> RawFd {

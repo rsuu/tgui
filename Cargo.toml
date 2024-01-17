@@ -1,7 +1,7 @@
 [package]
 name = "tgup"
 edition = "2021"
-version= "0.1.0"
+version = "0.1.0"
 authors = ["RSUU <rsuuyu@gmail.com>"]
 description = ""
 homepage = "https://crates.io/crates/tgup"
@@ -38,7 +38,10 @@ strip = true
 prost = "0.12.3"
 rand = "0.8.5"
 nix = { version = "0.27.1", features = ["socket", "uio"] }
-image = { version = "0.24.7", default-features = false, features = ["jpeg", "png"] }
+image = { version = "0.24.8", default-features = false, features = [
+  "jpeg",
+  "png",
+] }
 thiserror = "1.0.56"
 
 [build-dependencies]
