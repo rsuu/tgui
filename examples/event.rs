@@ -11,9 +11,8 @@ fn main() -> Res<()> {
         .set_data(data)
         .set_text("hi".to_string())
         .conn(&tgui)?;
-
-    let mut event = Event::new(&act, text_view.res())?;
     let view = act.gen_view(text_view.res());
+    let mut event = Event::new(&act, text_view.res())?;
 
     'l1: loop {
         event.get_event(&tgui)?;
@@ -47,6 +46,7 @@ fn main() -> Res<()> {
                 index,
                 ..
             }) => {
+                //for f in touches.iter() {}
                 dbg!(touches, v, action, index);
             }
 

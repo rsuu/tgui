@@ -1,3 +1,5 @@
+use crate::{res::MyErr, *};
+
 use nix::sys::socket::{
     accept, bind, listen, recv, send, socket, AddressFamily, MsgFlags, SockFlag, SockType, UnixAddr,
 };
@@ -12,9 +14,7 @@ use std::{
     thread::sleep_ms,
 };
 
-use crate::{res::MyErr, *};
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tgui {
     pub main: RawFd,
     pub event: RawFd,
@@ -35,9 +35,17 @@ pub enum ProtocolType {
     Json = 0b0000_0001,
 }
 
+pub trait TguiDrop {
+    fn drop(&mut self, tgui: &Tgui) -> Res<()>;
+}
+
 impl Tgui {
+    pub fn drop(&self, v: &mut impl TguiDrop) -> Res<()> {
+        TguiDrop::drop(v, self)
+    }
+
     pub fn new() -> Res<Self> {
-        // gen random string
+        // random string
         let main_addr = Alphanumeric.sample_string(&mut thread_rng(), 50);
         let event_addr = Alphanumeric.sample_string(&mut thread_rng(), 50);
 
@@ -181,6 +189,20 @@ impl Tgui {
 
     pub fn activity(&self) -> &Activity {
         &self.activity
+    }
+}
+
+impl Tgui {
+    pub fn close(&self) {
+        unsafe {
+            if nix::libc::close(self.fd_main()) != 0 {
+                panic!()
+            }
+
+            if nix::libc::close(self.fd_event()) != 0 {
+                panic!()
+            }
+        }
     }
 }
 

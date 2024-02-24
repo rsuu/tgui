@@ -17,34 +17,57 @@ use crate::{
     Img, ImgTy, *,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
+
+    pub data: Vec<u8>,
 }
 
 #[derive(Debug)]
 pub struct BufferRes {
     pub fd: RawFd,
-    pub bid: usize,
+    pub bid: i32,
 
     len: usize,
-    ptr: *mut u8,
+    ptr: *mut u8, // Vec<u8>
 }
 
 impl Buffer {
     pub fn new(imgty: &ImgTy) -> Res<Self> {
         let (width, height) = imgty.get_wh()?;
 
-        Ok(Self { width, height })
+        Ok(Self {
+            width,
+            height,
+            data: imgty.as_slice()?.to_vec(),
+        })
+    }
+
+    pub fn zero(width: u32, height: u32) -> Res<Self> {
+        Ok(Self {
+            width,
+            height,
+            data: vec![0; width as usize * height as usize * 4],
+        })
     }
 
     pub fn size(&self) -> usize {
         self.width as usize * self.height as usize
     }
+
+    pub fn data(&self) -> &[u8] {
+        self.data.as_slice()
+    }
+
+    pub fn mut_data(&mut self) -> &mut Vec<u8> {
+        &mut self.data
+    }
 }
 
 impl BufferRes {
+    // unsafe: `fd` is created in cpp.
     pub unsafe fn mmap(&mut self) -> Res<()> {
         // REFS: https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-mmap-map-pages-memory
         let addr = libc::mmap(
@@ -55,7 +78,6 @@ impl BufferRes {
             self.fd,
             0,
         );
-
         if addr.is_null() {
             return Err(MyErr::Todo);
         }
@@ -65,32 +87,46 @@ impl BufferRes {
         Ok(())
     }
 
-    // # Safety
-    // We will check if ptr is null OR buf.len != self.len
     pub fn mmap_flush(&mut self, buf: &[u8]) -> Res<()> {
-        if self.ptr.is_null() || buf.len() != self.len {
-            return Err(MyErr::Todo);
-        }
-
         // for (i, b) in buf.iter().enumerate() {
         //     unsafe {
         //         self.ptr.add(i).write(*b);
         //     }
         // }
 
-        let mem = unsafe { std::slice::from_raw_parts_mut(self.ptr, self.len) };
+        let mem = self.mmap_from_ptr(buf.len())?;
         mem.copy_from_slice(buf);
 
         Ok(())
+    }
+
+    pub fn mmap_flush_with_swap(&mut self, buf: &mut [u8]) -> Res<()> {
+        let mem = self.mmap_from_ptr(buf.len())?;
+        mem.swap_with_slice(buf);
+
+        Ok(())
+    }
+
+    // # Safety
+    // Make sure `buf.len == self.len`
+    fn mmap_from_ptr(&mut self, len: usize) -> Res<&mut [u8]> {
+        debug_assert_eq!(self.len, len);
+
+        if self.ptr.is_null() {
+            return Err(MyErr::Todo);
+        }
+
+        let mem = unsafe { std::slice::from_raw_parts_mut(self.ptr, self.len) };
+
+        Ok(mem)
     }
 }
 
 impl Tgui {
     pub fn new_buffer(&self, req: &Buffer) -> Res<BufferRes> {
-        let Buffer { width, height } = *req;
+        let Buffer { width, height, .. } = *req;
         let method = Method {
             method: Some(method::Method::AddBuffer(AddBufferRequest {
-                // BUG: it's RGBA and not ARGB
                 f: items::add_buffer_request::Format::Argb8888.into(),
                 width,
                 height,
@@ -108,8 +144,10 @@ impl Tgui {
             start += ret;
         }
 
-        // the value can be discarded
-        let id = i32::from_be_bytes(buf);
+        let bid = i32::from_be_bytes(buf);
+        if bid < 0 {
+            return Err(MyErr::Todo);
+        }
 
         let mut tmp = [0_u8; 1];
         let mut fds = cmsg_space!([RawFd; 2]);
@@ -139,13 +177,9 @@ impl Tgui {
 
         //dbg!(fds, id, fd);
 
-        if id < 0 {
-            return Err(MyErr::Todo);
-        }
-
         Ok(BufferRes {
             fd: fd.unwrap().into_raw_fd(),
-            bid: id as usize,
+            bid,
 
             // TODO: enum rgb size
             len: req.size() * 4,
@@ -185,5 +219,24 @@ impl Tgui {
         self.send_msg(msg.as_slice())?;
 
         self.recv_msg()
+    }
+}
+
+impl TguiDrop for BufferRes {
+    fn drop(&mut self, tgui: &Tgui) -> Res<()> {
+        unsafe {
+            if nix::libc::close(self.fd) != 0 {
+                return Err(MyErr::Todo);
+            }
+
+            nix::libc::munmap(self.ptr as *mut _, self.len);
+        }
+
+        //        let _: DeleteBufferResponse =
+        //            tgui.sr(method::Method::DeleteBuffer(items::DeleteBufferRequest {
+        //                buffer: self.bid as i32,
+        //            }))?;
+
+        Ok(())
     }
 }

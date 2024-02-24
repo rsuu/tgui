@@ -10,24 +10,26 @@ pub enum ImgTy {
         data: Vec<u8>,
     },
 
-    ARGB8888 {
-        width: u32,
-        height: u32,
-        data: Vec<u8>,
-    },
-
     Jpg(Vec<u8>),
     Png(Vec<u8>),
 }
 
 impl ImgTy {
+    pub fn new_rgba(width: u32, height: u32, data: Vec<u8>) -> Self {
+        Self::RGBA8888 {
+            width,
+            height,
+            data,
+        }
+    }
+
     pub fn open(_path: &str) -> Res<Self> {
         todo!()
     }
 
     pub fn pixel_size(&self) -> Res<usize> {
         Ok(match self {
-            Self::RGBA8888 { .. } | Self::ARGB8888 { .. } => 4,
+            Self::RGBA8888 { .. } => 4,
 
             _ => return Err(MyErr::Todo),
         })
@@ -49,7 +51,6 @@ impl ImgTy {
         let width = dimg.width();
         let height = dimg.height();
 
-        // BUG: this is ARGB8888 in protobuf.
         let data = dimg.into_rgba8().into_vec();
 
         Ok(Self::RGBA8888 {
@@ -59,6 +60,7 @@ impl ImgTy {
         })
     }
 
+    // ARGB -> RGBA
     pub fn open_argb8888(path: &str) -> Res<Self> {
         let dimg = image::open(path).unwrap();
 
@@ -82,11 +84,11 @@ impl ImgTy {
         // a r g b r g b a *
         //             pop(0)
         for i in 0..data.len() - 4 {
-            data.swap(i + 0, i + 4);
+            data.swap(i, i + 4);
         }
         data.pop().unwrap();
 
-        Ok(Self::ARGB8888 {
+        Ok(Self::RGBA8888 {
             width,
             height,
             data,
@@ -96,28 +98,19 @@ impl ImgTy {
     pub fn get_wh(&self) -> Res<(u32, u32)> {
         Ok(match self {
             Self::RGBA8888 { width, height, .. } => (*width, *height),
-            Self::ARGB8888 { width, height, .. } => (*width, *height),
             _ => return Err(MyErr::Todo),
         })
     }
 
     pub fn as_slice(&self) -> Res<&[u8]> {
         Ok(match self {
-            Self::RGBA8888 { data, .. }
-            | Self::ARGB8888 { data, .. }
-            | Self::Jpg(data)
-            | Self::Png(data) => data.as_slice(),
-            _ => return Err(MyErr::UnsupportImgType),
+            Self::RGBA8888 { data, .. } | Self::Jpg(data) | Self::Png(data) => data.as_slice(),
         })
     }
 
     pub fn to_vec(&self) -> Res<Vec<u8>> {
         Ok(match self {
-            Self::RGBA8888 { data, .. }
-            | Self::ARGB8888 { data, .. }
-            | Self::Jpg(data)
-            | Self::Png(data) => data.clone(),
-            _ => return Err(MyErr::UnsupportImgType),
+            Self::RGBA8888 { data, .. } | Self::Jpg(data) | Self::Png(data) => data.clone(),
         })
     }
 }

@@ -1,8 +1,12 @@
+// TODO: ?macro
+
 pub mod activity;
 pub mod buffer;
+pub mod button;
 pub mod hwbuffer;
 pub mod img;
 pub mod layout;
+pub mod space;
 pub mod surface;
 pub mod text;
 pub mod views;
@@ -10,7 +14,7 @@ pub mod widget;
 
 use crate::*;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct WrapView<Req, Res> {
     req: Req,
     res: Option<Res>,
@@ -18,16 +22,17 @@ pub struct WrapView<Req, Res> {
 
 impl<Req, Res> WrapView<Req, Res>
 where
-    Req: ViewSet + Clone + prost::Message + Default,
-    Res: View + Clone + prost::Message + Default,
-    items::method::Method: From<Req>,
+    Req: Clone + Default + prost::Message + ViewSet,
+    Res: Clone + Default + prost::Message + View,
 {
     pub fn new() -> Self {
         Default::default()
     }
 
     pub fn conn(mut self, tgui: &Tgui) -> crate::Res<Self>
-where {
+    where
+        items::method::Method: From<Req>,
+    {
         let res = tgui.sr(items::method::Method::from(self.req.clone()))?;
 
         self.res = Some(res);
@@ -116,7 +121,7 @@ pub trait ViewSet: Sized {
         unreachable!()
     }
 
-    fn set_v(self, _: i32) -> Self {
+    fn set_v(self, _: items::Visibility) -> Self {
         unreachable!()
     }
 

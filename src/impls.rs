@@ -7,6 +7,14 @@ impl View for items::View {
     {
         Self { aid: -1, id: -1 }
     }
+
+    fn get_id(&self) -> Res<i32> {
+        Ok(self.id)
+    }
+
+    fn get_aid(&self) -> Res<i32> {
+        Ok(self.aid)
+    }
 }
 
 impl ViewSet for items::View {
@@ -54,8 +62,8 @@ impl ViewSet for items::Create {
         self
     }
 
-    fn set_v(mut self, v: i32) -> Self {
-        self.v = v;
+    fn set_v(mut self, v: items::Visibility) -> Self {
+        self.v = v as i32;
 
         self
     }

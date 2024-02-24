@@ -46,6 +46,16 @@ impl Activity {
     }
 }
 
+impl View for NewActivityResponse {
+    fn get_id(&self) -> Res<i32> {
+        Ok(self.aid)
+    }
+
+    fn get_aid(&self) -> Res<i32> {
+        Ok(self.aid)
+    }
+}
+
 impl View for Activity {
     fn new() -> Self {
         Self {

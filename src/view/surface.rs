@@ -1,49 +1,56 @@
-use crate::{
-    items::{
-        method, CreateSurfaceViewResponse, Method, SurfaceViewConfigRequest,
-        SurfaceViewConfigResponse,
-    },
-    *,
-};
+use crate::{items::*, View, ViewSet, *};
 
-use prost::Message;
-
-#[derive(Debug)]
-pub struct Surface {}
+pub type Surface = WrapView<CreateSurfaceViewRequest, CreateSurfaceViewResponse>;
 
 impl Tgui {
-    pub fn new_surface_view(&self, aid: i32) -> Res<CreateSurfaceViewResponse> {
-        let method = Method {
-            method: Some(method::Method::CreateSurfaceView(
-                items::CreateSurfaceViewRequest {
-                    data: Some(items::Create {
-                        aid,
-                        parent: -1,
-                        v: 100,
-                    }),
-                    keyboard: false,
-                    secure: false,
-                },
-            )),
+    pub fn new_surface(&self, data: Option<Create>, keyboard: bool, secure: bool) -> Res<Surface> {
+        let mut res = Surface {
+            req: CreateSurfaceViewRequest {
+                data,
+                keyboard,
+                secure,
+            },
+            res: None,
         };
-        let msg = method.encode_length_delimited_to_vec();
 
-        self.send_msg(msg.as_slice())?;
+        res.res = Some(self.sr(method::Method::from(res.req.clone()))?);
 
-        self.recv_msg()
+        Ok(res)
     }
+}
 
-    pub fn hwbuffer_view_config(&self, aid: i32, id: i32) -> Res<SurfaceViewConfigResponse> {
-        let method = Method {
-            method: Some(method::Method::SurfaceConfig(SurfaceViewConfigRequest {
-                v: Some(items::View { aid, id }),
-                ..Default::default()
-            })),
-        };
-        let msg = method.encode_length_delimited_to_vec();
+impl Surface {
+    pub fn set_buffer(
+        &self,
+        tgui: &Tgui,
+        v: Option<items::View>,
+        buffer: &BufferRes,
+    ) -> Res<SurfaceViewSetBufferResponse> {
+        tgui.sr(method::Method::SetSurfaceBuffer(
+            SurfaceViewSetBufferRequest {
+                v,
+                buffer: buffer.bid,
+            },
+        ))
+    }
+}
 
-        self.send_msg(msg.as_slice())?;
+impl ViewSet for items::CreateSurfaceViewRequest {
+    fn set_data(mut self, data: items::Create) -> Self {
+        self.data = Some(data);
 
-        self.recv_msg()
+        self
+    }
+}
+
+impl View for items::CreateSurfaceViewResponse {
+    fn get_id(&self) -> Res<i32> {
+        Ok(self.id)
+    }
+}
+
+impl From<CreateSurfaceViewRequest> for method::Method {
+    fn from(value: CreateSurfaceViewRequest) -> Self {
+        Self::CreateSurfaceView(value)
     }
 }

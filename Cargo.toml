@@ -1,18 +1,17 @@
 [package]
-name = "tgup"
+name = "tgui"
 edition = "2021"
 version = "0.1.0"
 authors = ["RSUU <rsuuyu@gmail.com>"]
 description = ""
-homepage = "https://crates.io/crates/tgup"
-repository = "https://github.com/rsuu/tgup"
+homepage = "https://crates.io/crates/tgui"
+repository = "https://github.com/rsuu/tgui"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 categories = []
 keywords = []
 
 [lib]
-name = "tgui"
 #crate-type = ["cdylib", "rlib"]
 
 [profile.release]
@@ -38,10 +37,7 @@ strip = true
 prost = "0.12.3"
 rand = "0.8.5"
 nix = { version = "0.27.1", features = ["socket", "uio"] }
-image = { version = "0.24.8", default-features = false, features = [
-  "jpeg",
-  "png",
-] }
+image = { version = "0.24.8", default-features = false, features = ["jpeg", "png"] }
 thiserror = "1.0.56"
 
 [build-dependencies]

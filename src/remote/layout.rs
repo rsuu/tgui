@@ -32,7 +32,7 @@ impl RLayout {
 }
 
 impl Tgui {
-    pub fn new_r_layout(&self) -> Res<RLayoutRes> {
+    pub fn new_rlayout(&self) -> Res<RLayoutRes> {
         let CreateRemoteLayoutResponse { rid, code } = self.sr(
             method::Method::CreateRemoteLayout(CreateRemoteLayoutRequest {}),
         )?;
@@ -40,7 +40,7 @@ impl Tgui {
         Ok(RLayoutRes { rid })
     }
 
-    pub fn r_layout_flush(&self, req: &RLayout, res: &RLayoutRes) -> Res<SetWidgetLayoutResponse> {
+    pub fn rlayout_flush(&self, req: &RLayout, res: &RLayoutRes) -> Res<SetWidgetLayoutResponse> {
         self.sr(method::Method::SetWidgetLayout(SetWidgetLayoutRequest {
             rid: res.rid,
             wid: req.wid.clone(),
@@ -50,7 +50,7 @@ impl Tgui {
 
 // View
 impl Tgui {
-    pub fn r_layout_set_bg(
+    pub fn rlayout_set_bg(
         &self,
         req: &RLayout,
         res: &RLayoutRes,
@@ -66,7 +66,7 @@ impl Tgui {
         ))
     }
 
-    pub fn r_layout_vis(
+    pub fn rlayout_vis(
         &self,
         res: &RLayoutRes,
         view_id: i32,
@@ -84,7 +84,7 @@ impl Tgui {
 
 // TextView
 impl Tgui {
-    pub fn r_layout_add_text_view(
+    pub fn rlayout_add_text_view(
         &self,
         req: &RLayout,
         res: &RLayoutRes,
@@ -97,7 +97,7 @@ impl Tgui {
         ))
     }
 
-    pub fn r_layout_set_text(
+    pub fn rlayout_set_text(
         &self,
         res: &RLayoutRes,
         text_view_id: i32,
@@ -110,7 +110,7 @@ impl Tgui {
         }))
     }
 
-    pub fn r_layout_set_text_color(
+    pub fn rlayout_set_text_color(
         &self,
         res: &RLayoutRes,
         text_view_id: i32,
@@ -128,7 +128,7 @@ impl Tgui {
 
 // ImageView
 impl Tgui {
-    pub fn r_layout_add_img_view(
+    pub fn rlayout_add_img_view(
         &self,
         req: &RLayout,
         res: &RLayoutRes,
@@ -141,7 +141,7 @@ impl Tgui {
         ))
     }
 
-    pub fn r_layout_set_img(
+    pub fn rlayout_set_img(
         &self,
         res: &RLayoutRes,
         img_view_id: i32,

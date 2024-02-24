@@ -1,4 +1,5 @@
-// Needed Termux TARGET_SDK >= 29
+// if Termux-TARGET_SDK < 29
+//    panic!()
 
 use nix::libc;
 use std::ffi::*;
@@ -7,7 +8,7 @@ const LIBANDROID_SO: &str = "libandroid.so";
 
 fn main() {
     unsafe {
-        start();
+        //start();
     }
 }
 

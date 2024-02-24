@@ -1,3 +1,4 @@
+pub mod config;
 pub mod connection;
 pub mod event;
 pub mod ffi;
@@ -11,13 +12,14 @@ pub mod items {
 }
 
 pub use {
-    // trait
-    view::{View, ViewSet},
     // struct/enum
     {
         connection::Tgui,
-        event::{Event, InterceptTy},
         ffi::android::LibAndroid,
+        items::{
+            set_gravity_request::Gravity, set_grid_layout_params_request::Alignment, size::Unit,
+            view_size::Constant, Direction,
+        },
         remote::layout::RLayout,
         res::{MyErr, Res},
         utils::*,
@@ -31,6 +33,11 @@ pub use {
             widget::Widget,
             WrapView,
         },
+    },
+    // trait
+    {
+        connection::TguiDrop,
+        view::{View, ViewSet},
     },
 };
 

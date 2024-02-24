@@ -13,6 +13,8 @@ fn main() -> Res<()> {
     let img = Img::new().set_data(data).conn(&tgui)?;
 
     tgui.buffer_set(act.get_id()?, &img, &buffer_res)?;
+    let view = act.gen_view(img.res());
+
     unsafe {
         buffer_res.mmap()?;
     }
@@ -24,7 +26,7 @@ fn main() -> Res<()> {
 
         tgui.buffer_blit(buffer_res.bid as i32)?;
         let view = act.gen_view(img.res());
-        img.refresh(&tgui, view)?;
+        img.refresh(&tgui, view.view.clone())?;
 
         sleep_ms(1000);
     }
@@ -36,9 +38,12 @@ fn main() -> Res<()> {
         buffer_res.mmap_flush(buf)?;
 
         tgui.buffer_blit(buffer_res.bid as i32)?;
-        let view = act.gen_view(img.res());
         img.refresh(&tgui, view)?;
 
         sleep_ms(100);
     }
+
+    tgui.drop(buffer_res)?;
+
+    Ok(())
 }
