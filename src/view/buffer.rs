@@ -36,7 +36,7 @@ pub struct BufferRes {
 
 impl Buffer {
     pub fn new(imgty: &ImgTy) -> Res<Self> {
-        let (width, height) = imgty.get_wh()?;
+        let (width, height) = imgty.size()?;
 
         Ok(Self {
             width,
@@ -67,6 +67,22 @@ impl Buffer {
 }
 
 impl BufferRes {
+    pub fn blit(&self, act: &Activity) -> Res<()> {
+        act.sr(method::Method::BlitBuffer(BlitBufferRequest {
+            buffer: self.bid,
+        }))
+    }
+
+    pub fn set(&self, act: &Activity, img: &Img) -> Res<()> {
+        act.sr(method::Method::SetBuffer(SetBufferRequest {
+            v: Some(items::View {
+                aid: act.aid()?,
+                id: img.id()?,
+            }),
+            buffer: self.bid,
+        }))
+    }
+
     // unsafe: `fd` is created in cpp.
     pub unsafe fn mmap(&mut self) -> Res<()> {
         // REFS: https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-mmap-map-pages-memory
@@ -122,7 +138,7 @@ impl BufferRes {
     }
 }
 
-impl Tgui {
+impl Activity {
     pub fn new_buffer(&self, req: &Buffer) -> Res<BufferRes> {
         let Buffer { width, height, .. } = *req;
         let method = Method {
@@ -140,7 +156,7 @@ impl Tgui {
         let mut buf = [0u8; 4];
         let mut start = 0;
         while start < 4 {
-            let ret = recv(self.main, &mut buf[start..], MsgFlags::empty()).unwrap();
+            let ret = recv(self.fd_main(), &mut buf[start..], MsgFlags::empty()).unwrap();
             start += ret;
         }
 
@@ -186,57 +202,23 @@ impl Tgui {
             ptr: std::ptr::null_mut(),
         })
     }
-
-    pub fn buffer_blit(&self, buffer: i32) -> Res<BlitBufferResponse> {
-        let req = BlitBufferRequest { buffer };
-        let method = Method {
-            method: Some(method::Method::BlitBuffer(req)),
-        };
-        let msg = method.encode_length_delimited_to_vec();
-
-        self.send_msg(msg.as_slice())?;
-
-        self.recv_msg()
-    }
-
-    pub fn buffer_set(
-        &self,
-        aid: i32,
-        img: &Img,
-        buffer_res: &BufferRes,
-    ) -> Res<SetBufferResponse> {
-        let method = Method {
-            method: Some(method::Method::SetBuffer(SetBufferRequest {
-                v: Some(items::View {
-                    aid,
-                    id: img.get_id()?,
-                }),
-                buffer: buffer_res.bid as i32,
-            })),
-        };
-        let msg = method.encode_length_delimited_to_vec();
-
-        self.send_msg(msg.as_slice())?;
-
-        self.recv_msg()
-    }
 }
 
-impl TguiDrop for BufferRes {
-    fn drop(&mut self, tgui: &Tgui) -> Res<()> {
-        unsafe {
-            if nix::libc::close(self.fd) != 0 {
-                return Err(MyErr::Todo);
-            }
-
-            nix::libc::munmap(self.ptr as *mut _, self.len);
-        }
-
-        //        let _: DeleteBufferResponse =
-        //            tgui.sr(method::Method::DeleteBuffer(items::DeleteBufferRequest {
-        //                buffer: self.bid as i32,
-        //            }))?;
-
-        Ok(())
-    }
-}
+//impl TaskDrop for BufferRes {
+//    fn drop(&mut self, act: &Activity) -> Res<()> {
+//        unsafe {
+//            if nix::libc::close(self.fd) != 0 {
+//                return Err(MyErr::Todo);
+//            }
+//
+//            nix::libc::munmap(self.ptr as *mut _, self.len);
+//        }
+//
+//        //let _: DeleteBufferResponse =
+//        //    act.sr(method::Method::DeleteBuffer(items::DeleteBufferRequest {
+//        //        buffer: self.bid as i32,
+//        //    }))?;
+//
+//        Ok(())
+//    }
+//}

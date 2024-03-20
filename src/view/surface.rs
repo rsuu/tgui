@@ -2,15 +2,17 @@ use crate::{items::*, View, ViewSet, *};
 
 pub type Surface = WrapView<CreateSurfaceViewRequest, CreateSurfaceViewResponse>;
 
-impl Tgui {
-    pub fn new_surface(&self, data: Option<Create>, keyboard: bool, secure: bool) -> Res<Surface> {
+impl Activity {
+    pub fn new_surface(&self, parent: i32, keyboard: bool, secure: bool) -> Res<Surface> {
         let mut res = Surface {
             req: CreateSurfaceViewRequest {
-                data,
+                data: Some(self.gen_create().unwrap().set_parent(parent)),
                 keyboard,
                 secure,
             },
             res: None,
+
+            act: self.clone(),
         };
 
         res.res = Some(self.sr(method::Method::from(res.req.clone()))?);
@@ -22,30 +24,21 @@ impl Tgui {
 impl Surface {
     pub fn set_buffer(
         &self,
-        tgui: &Tgui,
-        v: Option<items::View>,
-        buffer: &BufferRes,
+        v: &items::View,
+        buffer: Option<&HwBufferRes>,
     ) -> Res<SurfaceViewSetBufferResponse> {
-        tgui.sr(method::Method::SetSurfaceBuffer(
+        self.act.sr(method::Method::SetSurfaceBuffer(
             SurfaceViewSetBufferRequest {
-                v,
-                buffer: buffer.bid,
+                v: Some(v.clone()),
+                buffer: {
+                    if let Some(buffer) = buffer {
+                        buffer.bid
+                    } else {
+                        -1
+                    }
+                },
             },
         ))
-    }
-}
-
-impl ViewSet for items::CreateSurfaceViewRequest {
-    fn set_data(mut self, data: items::Create) -> Self {
-        self.data = Some(data);
-
-        self
-    }
-}
-
-impl View for items::CreateSurfaceViewResponse {
-    fn get_id(&self) -> Res<i32> {
-        Ok(self.id)
     }
 }
 

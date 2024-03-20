@@ -11,9 +11,8 @@ fn main() -> Res<()> {
 
     let data = act.gen_create().unwrap().set_parent(-1);
     let img = Img::new().set_data(data).conn(&tgui)?;
-
-    tgui.buffer_set(act.get_id()?, &img, &buffer_res)?;
-    let view = act.gen_view(img.res());
+    let view = act.gen_view(img.res()).unwrap();
+    buffer_res.set(&tgui, &act, &img)?;
 
     unsafe {
         buffer_res.mmap()?;
@@ -23,27 +22,25 @@ fn main() -> Res<()> {
     {
         let buf = imgty.as_slice()?;
         buffer_res.mmap_flush(buf)?;
+        buffer_res.blit(&tgui)?;
 
-        tgui.buffer_blit(buffer_res.bid as i32)?;
-        let view = act.gen_view(img.res());
-        img.refresh(&tgui, view.view.clone())?;
+        let view = act.gen_view(img.res()).unwrap();
+        img.refresh(&tgui, view.clone())?;
 
         sleep_ms(1000);
     }
 
     // frame 2
     let imgty = ImgTy::open_rgba8888("test2.jpg")?;
-    loop {
-        let buf = imgty.as_slice()?;
-        buffer_res.mmap_flush(buf)?;
+    let buf = imgty.as_slice()?;
+    buffer_res.mmap_flush(buf)?;
+    buffer_res.blit(&tgui)?;
 
-        tgui.buffer_blit(buffer_res.bid as i32)?;
-        img.refresh(&tgui, view)?;
+    img.refresh(&tgui, view.clone())?;
 
-        sleep_ms(100);
-    }
+    sleep_ms(3000);
 
-    tgui.drop(buffer_res)?;
+    tgui.close();
 
     Ok(())
 }

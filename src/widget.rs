@@ -32,7 +32,7 @@ impl Widget {
     }
 }
 
-impl Tgui {
+impl Activity {
     pub fn new_widget_view(&self, req: &Widget) -> Res<SetWidgetLayoutResponse> {
         let req = SetWidgetLayoutRequest {
             rid: req.rid,

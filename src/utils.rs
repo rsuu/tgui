@@ -95,11 +95,15 @@ impl ImgTy {
         })
     }
 
-    pub fn get_wh(&self) -> Res<(u32, u32)> {
+    pub fn size(&self) -> Res<(u32, u32)> {
         Ok(match self {
             Self::RGBA8888 { width, height, .. } => (*width, *height),
-            _ => return Err(MyErr::Todo),
+            _ => return Err(MyErr::Msg("get_wh")),
         })
+    }
+
+    pub fn len(&self) -> Res<usize> {
+        Ok(self.as_slice()?.len())
     }
 
     pub fn as_slice(&self) -> Res<&[u8]> {

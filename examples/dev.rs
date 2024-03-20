@@ -11,7 +11,7 @@ fn main() -> Res<()> {
     let r_act = tgui.new_activity(act)?;
     dbg!(&r_act);
 
-    let aid = r_act.get_id()?;
+    let aid = r_act.id()?;
 
     // display img
     {

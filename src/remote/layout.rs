@@ -31,7 +31,7 @@ impl RLayout {
     }
 }
 
-impl Tgui {
+impl Activity {
     pub fn new_rlayout(&self) -> Res<RLayoutRes> {
         let CreateRemoteLayoutResponse { rid, code } = self.sr(
             method::Method::CreateRemoteLayout(CreateRemoteLayoutRequest {}),
@@ -49,7 +49,7 @@ impl Tgui {
 }
 
 // View
-impl Tgui {
+impl Activity {
     pub fn rlayout_set_bg(
         &self,
         req: &RLayout,
@@ -83,7 +83,7 @@ impl Tgui {
 }
 
 // TextView
-impl Tgui {
+impl Activity {
     pub fn rlayout_add_text_view(
         &self,
         req: &RLayout,
@@ -127,7 +127,7 @@ impl Tgui {
 }
 
 // ImageView
-impl Tgui {
+impl Activity {
     pub fn rlayout_add_img_view(
         &self,
         req: &RLayout,

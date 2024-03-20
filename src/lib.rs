@@ -1,47 +1,42 @@
-pub mod config;
-pub mod connection;
+pub mod activity;
 pub mod event;
 pub mod ffi;
 pub mod impls;
+pub mod layout;
 pub mod remote;
 pub mod res;
+pub mod task;
+pub mod toolkit;
 pub mod utils;
 pub mod view;
+pub mod widget;
 pub mod items {
     include!(concat!(env!("OUT_DIR"), "/tgui.proto0.rs"));
 }
 
 pub use {
+    // trait
+    view::{Vi, View},
     // struct/enum
     {
-        connection::Tgui,
+        activity::*,
         ffi::android::LibAndroid,
         items::{
             set_gravity_request::Gravity, set_grid_layout_params_request::Alignment, size::Unit,
             view_size::Constant, Direction,
         },
+        layout::*,
         remote::layout::RLayout,
         res::{MyErr, Res},
+        task::Task,
+        toolkit::*,
         utils::*,
-        view::{
-            activity::{Activity, ActivityType},
-            buffer::{Buffer, BufferRes},
-            hwbuffer::{HwBuffer, HwBufferRes},
-            img::Img,
-            surface::Surface,
-            text::Text,
-            widget::Widget,
-            WrapView,
-        },
-    },
-    // trait
-    {
-        connection::TguiDrop,
-        view::{View, ViewSet},
+        view::*,
+        widget::Widget,
     },
 };
 
-// REFS: https://github.com/ArtemisX64/tgui-rs/
+// REFS: https://github.com/ArtemisX64/task-rs/
 //       https://github.com/termux/termux-gui/
 //       https://github.com/tareksander/termux-gui-c-bindings/
 //       https://github.com/tareksander/termux-gui-python-bindings/

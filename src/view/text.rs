@@ -2,48 +2,49 @@ use crate::{items::*, View, ViewSet, *};
 
 pub type Text = WrapView<CreateTextViewRequest, CreateTextViewResponse>;
 
-impl Text {
-    pub fn update(
-        &self,
-        tgui: &Tgui,
-        text: String,
-        view: Option<items::View>,
-    ) -> Res<SetTextResponse> {
-        tgui.sr(method::Method::SetText(SetTextRequest { v: view, text }))
+impl Activity {
+    pub fn new_text(&self, parent: &impl View, text: String) -> Res<Text> {
+        let mut res = Text {
+            req: CreateTextViewRequest {
+                data: Some(self.gen_create().unwrap().set_parent(parent.id()?)),
+                text,
+                selectable_text: true,
+                clickable_links: true,
+            },
+            res: None,
+            act: self.clone(),
+        };
+
+        res.res = Some(self.sr(method::Method::CreateTextView(res.req.clone()))?);
+
+        Ok(res)
     }
 }
 
 impl Text {
+    pub fn update(&self, text: String) -> Res<SetTextResponse> {
+        self.act.sr(method::Method::SetText(SetTextRequest {
+            v: self.act.gen_view(self),
+            text,
+        }))
+    }
+
     pub fn set_text(mut self, text: String) -> Self {
         self.req.text = text;
 
         self
     }
 
-    pub fn flag_selectable_text(mut self) -> Self {
-        self.req.selectable_text = true;
+    pub fn set_selectable_text(mut self, flag: bool) -> Self {
+        self.req.selectable_text = flag;
 
         self
     }
 
-    pub fn flag_clickable_links(mut self) -> Self {
-        self.req.clickable_links = true;
+    pub fn set_clickable_links(mut self, flag: bool) -> Self {
+        self.req.clickable_links = flag;
 
         self
-    }
-}
-
-impl ViewSet for items::CreateTextViewRequest {
-    fn set_data(mut self, data: items::Create) -> Self {
-        self.data = Some(data);
-
-        self
-    }
-}
-
-impl View for items::CreateTextViewResponse {
-    fn get_id(&self) -> Res<i32> {
-        Ok(self.id)
     }
 }
 

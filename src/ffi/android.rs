@@ -54,7 +54,7 @@ pub struct LibAndroid {
 }
 
 #[repr(C)]
-pub struct TguiHardwareBuffer {
+pub struct TaskHardwareBuffer {
     id: i32,
     buffer: *mut AHardwareBuffer,
 }

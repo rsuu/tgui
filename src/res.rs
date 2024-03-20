@@ -4,6 +4,9 @@ pub type Res<T> = Result<T, MyErr>;
 
 #[derive(Debug, Error)]
 pub enum MyErr {
+    #[error("{0}")]
+    Msg(&'static str),
+
     #[error("TODO")]
     Todo,
 

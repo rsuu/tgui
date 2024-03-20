@@ -1,8 +1,3 @@
-// TODO:
-//   [ ] A: remove shadow of Button
-//       B: ImageButton
-//   [ ] LinearLayout
-
 // Layout:
 //
 // <FrameLayout>
@@ -28,7 +23,7 @@ fn main() -> Res<()> {
     let l_view = tgui.new_layout_grid(data, 1, 3)?;
 
     // Left Button
-    let data = act.gen_create().unwrap().set_parent(l_view.get_id()?);
+    let data = act.gen_create().unwrap().set_parent(l_view.id()?);
     let l_btn_view = tgui.new_button(data, false, "lbtn".to_string())?;
     let l_abv = act.gen_view(&l_btn_view).unwrap();
     //tgui.view_set_clickable(l_abv.clone(), false)?;
@@ -39,7 +34,7 @@ fn main() -> Res<()> {
     view_map.insert((l_abv.aid, l_abv.id), "lbtn");
 
     // Right Button
-    let data = act.gen_create().unwrap().set_parent(l_view.get_id()?);
+    let data = act.gen_create().unwrap().set_parent(l_view.id()?);
     //.set_v(Visibility::Hidden);
     let r_btn_view = tgui.new_button(data, false, "rbtn".to_string())?;
     let r_abv = act.gen_view(&r_btn_view).unwrap();
@@ -62,7 +57,7 @@ fn main() -> Res<()> {
     view_map.insert((r_abv.aid, r_abv.id), "rbtn");
 
     // Image Buffer
-    let data = act.gen_create().unwrap().set_parent(l_view.get_id()?);
+    let data = act.gen_create().unwrap().set_parent(l_view.id()?);
     let img_view = Img::new().set_data(data).conn(&tgui)?;
     let ity = ImgTy::open_jpg("test.jpg").unwrap();
     let aiv = act.gen_view(&img_view).unwrap();
@@ -121,7 +116,7 @@ fn main() -> Res<()> {
             _ => {}
         }
 
-        img_view.update(&tgui, &ity, aiv.clone())?;
+        img_view.update(&ity, aiv.clone())?;
         sleep_ms(100);
     }
 

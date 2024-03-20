@@ -5,23 +5,36 @@ Rust Bindings For Termux GUI
 ## Usage
 
 ```rust
+// layout:
+//
+// <LinearLayout>
+//   <Text />
+// </LinearLayout>
+
 use std::thread::sleep_ms;
-use tgui::{View, ViewSet, *};
+use tgui::*;
 
 fn main() -> Res<()> {
-    let tgui = Tgui::new()?.conn()?;
-    let act = Activity::new().conn(&tgui)?;
+    let task = Task::new()?.conn()?;
+    let act = task.new_activity(-1)?;
 
-    let data = act.gen_create().unwrap().set_parent(-1);
-    let img_view = Img::new().set_data(data).conn(&tgui)?;
+    let layout_linear = act.new_top_layout_linear(true)?;
 
-    let ity = ImgTy::open_jpg("test.jpg").unwrap();
-    let view = act.gen_view(img_view.res());
-    img_view.update(&tgui, &ity, view)?;
+    let text = act.new_text(&layout_linear, "hi".to_string())?;
+    // // longer version
+    // let text = Text::new(&act)
+    //     .set_data(act.gen_create().unwrap().set_parent(layout_linear.id()?))
+    //     .set_selectable_text(true)
+    //     .set_clickable_links(true)
+    //     .set_text("hi".to_string())
+    //     .conn()?;
+    sleep_ms(1000);
 
-    dbg!(img_view);
+    // update
+    text.update("bye".to_string())?;
+    sleep_ms(1000);
 
-    sleep_ms(10000);
+    act.close();
 
     Ok(())
 }
@@ -34,17 +47,18 @@ fn main() -> Res<()> {
 - [ ] EditView
 - [ ] NestedScrollView
 - [ ] HorizontalScrollView
-- [ ] Button
+- [x] Button
 - [ ] Spinner
 - [ ] Switch
 - [ ] Toggle Button
 - [ ] Event
 - [ ] Radio Button
 - [ ] Remote
-- [ ] Linear Layout
+- [x] LinearLayout
+- [x] FrameLayout
 - [ ] Swipe Refresh Layout
 - [ ] TabLayout
-- [ ] ProgressBar
+- [x] ProgressBar
 - [ ] Notification
 - [ ] Status Bar
 - [ ] Navigation Bar
