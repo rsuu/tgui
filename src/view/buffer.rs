@@ -11,11 +11,77 @@ use std::{
 
 use crate::{
     items::{
-        method, AddBufferRequest, BlitBufferRequest, BlitBufferResponse, Method, SetBufferRequest,
-        SetBufferResponse,
+        method, AddBufferRequest, BlitBufferRequest, BlitBufferResponse, DeleteBufferResponse,
+        Method, SetBufferRequest, SetBufferResponse,
     },
     Img, ImgTy, *,
 };
+
+impl Activity {
+    pub fn new_buffer(&self, req: &Buffer) -> Res<BufferRes> {
+        let Buffer { width, height, .. } = *req;
+        let method = Method {
+            method: Some(method::Method::AddBuffer(AddBufferRequest {
+                f: items::add_buffer_request::Format::Argb8888.into(),
+                width,
+                height,
+            })),
+        };
+        let msg = method.encode_length_delimited_to_vec();
+
+        self.send_msg(msg.as_slice())?;
+
+        // i32
+        let mut buf = [0u8; 4];
+        let mut start = 0;
+        while start < 4 {
+            let ret = recv(self.fd_main(), &mut buf[start..], MsgFlags::empty()).unwrap();
+            start += ret;
+        }
+
+        let bid = i32::from_be_bytes(buf);
+        if bid < 0 {
+            return Err(MyErr::Todo);
+        }
+
+        let mut tmp = [0_u8; 1];
+        let mut fds = cmsg_space!([RawFd; 2]);
+        let mut fd = Option::<i32>::None;
+        'l1: loop {
+            let mut io_mut_buff = [std::io::IoSliceMut::new(&mut tmp)];
+            let ret: RecvMsg<SockaddrStorage> = recvmsg(
+                self.fd_main(),
+                &mut io_mut_buff,
+                Some(&mut fds),
+                MsgFlags::MSG_CMSG_CLOEXEC,
+            )
+            .unwrap();
+
+            if ret.bytes != 1 {
+                return Err(MyErr::Todo);
+            }
+
+            for f in ret.cmsgs().into_iter() {
+                if let ControlMessageOwned::ScmRights(v) = f {
+                    fd = v.first().copied();
+
+                    break 'l1;
+                }
+            }
+        }
+
+        //dbg!(fds, id, fd);
+
+        Ok(BufferRes {
+            fd: fd.unwrap().into_raw_fd(),
+            bid,
+
+            // TODO: enum rgb size
+            len: req.size() * 4,
+            ptr: std::ptr::null_mut(),
+        })
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Buffer {
@@ -61,8 +127,8 @@ impl Buffer {
         self.data.as_slice()
     }
 
-    pub fn mut_data(&mut self) -> &mut Vec<u8> {
-        &mut self.data
+    pub fn mut_data(&mut self) -> &mut [u8] {
+        self.data.as_mut_slice()
     }
 }
 
@@ -136,89 +202,18 @@ impl BufferRes {
 
         Ok(mem)
     }
+
+    //    pub fn delete(&mut self, act: &Activity) -> Res<DeleteBufferResponse> {
+    //        unsafe {
+    //            if nix::libc::close(self.fd) != 0 {
+    //                return Err(MyErr::Todo);
+    //            }
+    //
+    //            nix::libc::munmap(self.ptr as *mut _, self.len);
+    //        }
+    //
+    //        act.sr(method::Method::DeleteBuffer(items::DeleteBufferRequest {
+    //            buffer: self.bid,
+    //        }))
+    //    }
 }
-
-impl Activity {
-    pub fn new_buffer(&self, req: &Buffer) -> Res<BufferRes> {
-        let Buffer { width, height, .. } = *req;
-        let method = Method {
-            method: Some(method::Method::AddBuffer(AddBufferRequest {
-                f: items::add_buffer_request::Format::Argb8888.into(),
-                width,
-                height,
-            })),
-        };
-        let msg = method.encode_length_delimited_to_vec();
-
-        self.send_msg(msg.as_slice())?;
-
-        // i32
-        let mut buf = [0u8; 4];
-        let mut start = 0;
-        while start < 4 {
-            let ret = recv(self.fd_main(), &mut buf[start..], MsgFlags::empty()).unwrap();
-            start += ret;
-        }
-
-        let bid = i32::from_be_bytes(buf);
-        if bid < 0 {
-            return Err(MyErr::Todo);
-        }
-
-        let mut tmp = [0_u8; 1];
-        let mut fds = cmsg_space!([RawFd; 2]);
-        let mut fd = Option::<i32>::None;
-        'l1: loop {
-            let mut io_mut_buff = [std::io::IoSliceMut::new(&mut tmp)];
-            let ret: RecvMsg<SockaddrStorage> = recvmsg(
-                self.fd_main(),
-                &mut io_mut_buff,
-                Some(&mut fds),
-                MsgFlags::MSG_CMSG_CLOEXEC,
-            )
-            .unwrap();
-
-            if ret.bytes != 1 {
-                return Err(MyErr::Todo);
-            }
-
-            for f in ret.cmsgs().into_iter() {
-                if let ControlMessageOwned::ScmRights(v) = f {
-                    fd = v.first().copied();
-
-                    break 'l1;
-                }
-            }
-        }
-
-        //dbg!(fds, id, fd);
-
-        Ok(BufferRes {
-            fd: fd.unwrap().into_raw_fd(),
-            bid,
-
-            // TODO: enum rgb size
-            len: req.size() * 4,
-            ptr: std::ptr::null_mut(),
-        })
-    }
-}
-
-//impl TaskDrop for BufferRes {
-//    fn drop(&mut self, act: &Activity) -> Res<()> {
-//        unsafe {
-//            if nix::libc::close(self.fd) != 0 {
-//                return Err(MyErr::Todo);
-//            }
-//
-//            nix::libc::munmap(self.ptr as *mut _, self.len);
-//        }
-//
-//        //let _: DeleteBufferResponse =
-//        //    act.sr(method::Method::DeleteBuffer(items::DeleteBufferRequest {
-//        //        buffer: self.bid as i32,
-//        //    }))?;
-//
-//        Ok(())
-//    }
-//}

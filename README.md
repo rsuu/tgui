@@ -30,7 +30,6 @@ fn main() -> Res<()> {
     //     .conn()?;
     sleep_ms(1000);
 
-    // update
     text.update("bye".to_string())?;
     sleep_ms(1000);
 
