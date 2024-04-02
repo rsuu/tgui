@@ -1,4 +1,5 @@
 pub mod activity;
+pub mod any;
 pub mod event;
 pub mod ffi;
 pub mod impls;
@@ -15,6 +16,7 @@ pub mod items {
 }
 
 pub use {
+    any::Any,
     // trait
     view::{Vi, View},
     // struct/enum
